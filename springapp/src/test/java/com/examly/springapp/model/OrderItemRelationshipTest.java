@@ -1,8 +1,5 @@
 package com.examly.springapp.model;
 
-import com.examly.springapp.repository.OrderItemRepository;
-import com.examly.springapp.repository.OrderRepository;
-import com.examly.springapp.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

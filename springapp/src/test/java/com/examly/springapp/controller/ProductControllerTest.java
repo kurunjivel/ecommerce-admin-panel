@@ -1,7 +1,6 @@
 package com.examly.springapp.controller;
 
 import com.examly.springapp.model.Product;
-import com.examly.springapp.repository.ProductRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

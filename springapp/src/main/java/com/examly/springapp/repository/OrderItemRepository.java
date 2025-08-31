@@ -1,5 +1,4 @@
 package com.examly.springapp.repository;
 
-public class OrderItemRepository {
-    
+public interface OrderItemRepository {
 }
