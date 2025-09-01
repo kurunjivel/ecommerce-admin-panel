@@ -2,6 +2,10 @@ package com.examly.springapp.service;
 
 import com.examly.springapp.dto.OrderCreateRequest;
 import com.examly.springapp.dto.OrderItemCreateRequest;
+import com.examly.springapp.exception.InsuffcientStockException;
+import com.examly.springapp.exception.InvalidStatusException;
+import com.examly.springapp.exception.OrderNotFoundException;
+import com.examly.springapp.exception.ProductNotFoundException;
 import com.examly.springapp.model.Order;
 import com.examly.springapp.model.OrderItem;
 import com.examly.springapp.model.Product;
@@ -34,10 +38,10 @@ public class OrderService {
 
         for (OrderItemCreateRequest itemReq : request.getOrderItems()) {
             Product product = productRepository.findById(itemReq.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+                    .orElseThrow(() -> new ProductNotFoundException());
 
             if (product.getStockQuantity() < itemReq.getQuantity()) {
-                throw new IllegalArgumentException("Insufficient stock");
+                throw new InsuffcientStockException();
             }
 
             product.setStockQuantity(product.getStockQuantity() - itemReq.getQuantity());
@@ -68,11 +72,11 @@ public class OrderService {
     }
 public Order updateOrderStatus(Long id, String status) {
 Order order = orderRepository.findById(id)
-.orElseThrow(() -> new IllegalArgumentException("Order not found"));
+.orElseThrow(() -> new OrderNotFoundException());
 
 if (!(status.equals("PENDING") || status.equals("SHIPPED")
 || status.equals("DELIVERED") || status.equals("CANCELLED"))) {
-throw new IllegalArgumentException("Invalid status");
+throw new InvalidStatusException();
 }
 
 order.setStatus(status);

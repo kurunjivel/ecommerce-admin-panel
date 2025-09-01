@@ -10,6 +10,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -29,5 +31,6 @@ public class Order {
     private LocalDate orderDate;
 
     @OneToMany(mappedBy = "order" ,cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<OrderItem> orderItems =new ArrayList<>();
 }
