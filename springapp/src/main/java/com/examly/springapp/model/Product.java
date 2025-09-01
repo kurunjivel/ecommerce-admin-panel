@@ -17,12 +17,12 @@ import lombok.NoArgsConstructor;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-   public int id;
-   public String name;
-   public String description;
-   public double price;
-   public String category;
-   public int stockQuantity;
-   public String imageUrl;
+    public int id;
+    public String name;
+    public String description;
+    public double price;
+    public String category;
+    public int stockQuantity;
+    public String imageUrl;
 
 }

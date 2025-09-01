@@ -1,12 +1,16 @@
 package com.examly.springapp.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class OrderItem {
 
@@ -21,8 +25,4 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "order_id")
     public Order order;
-
-    public OrderItem() {
-
-    }
 }
