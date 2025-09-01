@@ -3,6 +3,7 @@ package com.examly.springapp.controller;
 import com.examly.springapp.model.Product;
 import com.examly.springapp.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public Product getProduct(@PathVariable("id") int id) {
+    public Product getProduct(@PathVariable("id") Long id) {
         return productService.getProductById(id);
     }
 
@@ -28,14 +29,16 @@ public class ProductController {
         return productService.addNewProduct(product);
     }
 
-    @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable("id") int id, @RequestBody Product product) {
-        return productService.updateProduct(id,product);
-    }
+//    @PutMapping("/{id}")
+//    public Product updateProduct(@PathVariable("id") Long id, @RequestBody Product product) {
+//        return productService.updateProduct(id,product);
+//    }
 
     @DeleteMapping("/{id}")
-    public void deleteProduct(@PathVariable("id") int id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
+
     
 }

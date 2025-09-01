@@ -11,29 +11,34 @@ import java.util.List;
 public class ProductService {
     @Autowired
     private ProductRepository productRepository;
+
     public List<Product> getProductDetails() {
         return productRepository.findAll();
     }
 
-    public Product getProductById(int id) {
-        return productRepository.getProductById(id);
+    public Product getProductById(Long id) {
+        return productRepository.findById(id).orElse(null);
     }
 
     public Product addNewProduct(Product product) {
         return productRepository.save(product);
     }
 
-    public Product updateProduct(int id, Product product) {
-        if(product == null || id < 0) {
-            return null;
-        }
-        return productRepository.save(product);
-    }
-    public  void deleteProduct(int id) {
-        if(id < 0) {
-            return;
-        }
-        productRepository.deleteAll();
+//    public Product updateProduct(Long id, Product product) {
+//        return productRepository.findById(id)
+//                .map(existing -> {
+//                    existing.setName(product.getName());
+//                    existing.setDescription(product.getDescription());
+//                    existing.setPrice(product.getPrice());
+//                    existing.setCategory(product.getCategory());
+//                    existing.setStockQuantity(product.getStockQuantity());
+//                    existing.setImageUrl(product.getImageUrl());
+//                    return productRepository.save(existing);
+//                })
+//                .orElse(null);
+//    }
+    public  void deleteProduct(Long id) {
+        productRepository.deleteById(id);
     }
 
 }

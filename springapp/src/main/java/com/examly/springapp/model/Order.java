@@ -1,19 +1,29 @@
 package com.examly.springapp.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
-
+import java.time.LocalDate;
 import java.util.List;
+
 @Entity
 @Data
+@Builder
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-    private String customerName;
-    private String customerEmail;
-    private String shippingAddress;
+    public Long id;
+    public String customerName;
+    public String customerEmail;
+    public String shippingAddress;
+    public double totalAmount;
+    public String status;
+    public LocalDate orderDate;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<OrderItem> orderItems;
+
+    public Order() {
+
+    }
 }

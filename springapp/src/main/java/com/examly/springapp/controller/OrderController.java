@@ -6,33 +6,32 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
+
     @Autowired
     private OrderService orderService;
 
-    @GetMapping("/")
+    @GetMapping
     public List<Order> getOrders() {
-        return orderService.getOrderDetails();
+        return orderService.getAllOrders();
     }
 
     @GetMapping("/{id}")
-    public  Order getOrderDetailById(@PathVariable("id") Long id) {
+    public Order getOrderDetailById(@PathVariable("id") Long id) {
         return orderService.getOrderById(id);
     }
 
-    @PostMapping("/")
-    public Order createOrder(@RequestBody Order order) {
-        return orderService.addOrder(order);
-    }
+//    @PostMapping
+//    public Order createOrder(@RequestBody Order order) {
+//        return orderService.createOrder(order);
+//    }
 
-    @PutMapping("/{id}")
-    public Order updateOrder(@PathVariable("id") Long id, @RequestBody Order order) {
-        return orderService.updateOrder(order);
-    }
-
-//    @PatchMapping("/{id}/{status}")
-//    public getPatch
+//    @PatchMapping("/{id}/status")
+//    public Order updateOrderStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+//        return orderService.updateOrderStatus(id, request.get("status"));
+//    }
 }
