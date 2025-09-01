@@ -16,13 +16,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    public Long id;
-    public String name;
-    public String description;
-    public double price;
-    public String category;
-    public int stockQuantity;
-    public String imageUrl;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    
+    private String name;
+    private  String description;
+    private double price;
+   private  String category;
+   private  int stockQuantity;
+   private  String imageUrl;
 
 }

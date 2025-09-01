@@ -1,5 +1,7 @@
 package com.examly.springapp.service;
 
+import com.examly.springapp.dto.OrderCreateRequest;
+import com.examly.springapp.dto.OrderItemCreateRequest;
 import com.examly.springapp.model.Order;
 import com.examly.springapp.model.OrderItem;
 import com.examly.springapp.model.Product;
@@ -9,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -21,37 +22,65 @@ public class OrderService {
     @Autowired
     private ProductRepository productRepository;
 
-//    public Order createOrder(Order order) {
-//        double total = 0.0;
-//
-//        for (OrderItem item : order.getOrderitems()) {
-//            Product product = productRepository.findById(item.getProductId())
-//                    .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProductId()));
-//            item.setPriceAtPurchase(product.getPrice());
-//            total += product.getPrice() * item.getQuantity();
-//        }
-//
-//        order.setTotalAmount(total);
-//        order.setStatus("PENDING");
-//        order.setOrderDate(LocalDate.now());
-//
-//        return orderRepository.save(order);
-//    }
+    // ✅ Create order using DTO
+    public Order createOrderFromRequest(OrderCreateRequest request) {
+        Order order = new Order();
+        order.setCustomerName(request.getCustomerName());
+        order.setCustomerEmail(request.getCustomerEmail());
+        order.setShippingAddress(request.getShippingAddress());
+        order.setOrderDate(LocalDate.now());
+        order.setStatus("PENDING");
 
+        double total = 0.0;
+
+        for (OrderItemCreateRequest itemReq : request.getOrderItems()) {
+            Product product = productRepository.findById(itemReq.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+            if (product.getStockQuantity() < itemReq.getQuantity()) {
+                throw new IllegalArgumentException("Insufficient stock");
+            }
+
+            // decrease stock
+            product.setStockQuantity(product.getStockQuantity() - itemReq.getQuantity());
+            productRepository.save(product);
+
+            OrderItem item = new OrderItem();
+            item.setProduct(product);
+            item.setQuantity(itemReq.getQuantity());
+            item.setPriceAtPurchase(product.getPrice());
+            item.setOrder(order);
+
+            order.getOrderItems().add(item);
+            total += product.getPrice() * itemReq.getQuantity();
+        }
+
+        order.setTotalAmount(total);
+
+        return orderRepository.save(order);
+    }
+
+    // ✅ Get all orders
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
 
+    // ✅ Get order by ID
     public Order getOrderById(Long id) {
-        return orderRepository.findById(id).orElse(null);
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
     }
+// ✅ Update order status
+public Order updateOrderStatus(Long id, String status) {
+Order order = orderRepository.findById(id)
+.orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
-//    public Order updateOrderStatus(Long id, String status) {
-//        Order order = orderRepository.findById(id).orElse(null);
-//        if (order != null) {
-//            order.setStatus(status);
-//            return orderRepository.save(order);
-//        }
-//        return null;
-//    }
+if (!(status.equals("PENDING") || status.equals("SHIPPED")
+|| status.equals("DELIVERED") || status.equals("CANCELLED"))) {
+throw new IllegalArgumentException("Invalid status");
+}
+
+order.setStatus(status);
+return orderRepository.save(order);
+}
 }

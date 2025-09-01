@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Data
@@ -16,14 +15,18 @@ public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
-    public Long productId;
-    public int quantity;
-    public double priceAtPurchase;
-    public Product product;
+    private Long id;
+
+
+    private int quantity;
+    private double priceAtPurchase;
 
     // Many items belong to one order
     @ManyToOne
-    @JoinColumn(name = "order_id")
-    public Order order;
+    @JoinColumn(name = "product_id",nullable = false)
+    private Product product;
+
+    @ManyToOne
+    @JoinColumn(name="order_id",nullable = false)
+    private Order order;
 }

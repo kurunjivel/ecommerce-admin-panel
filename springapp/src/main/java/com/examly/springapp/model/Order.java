@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -14,17 +15,19 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Table(name="orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    public Long id;
-    public String customerName;
-    public String customerEmail;
-    public String shippingAddress;
-    public double totalAmount;
-    public String status;
-    public LocalDate orderDate;
+    private Long id;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<OrderItem> orderItems;
+    private String customerName;
+    private String customerEmail;
+    private String shippingAddress;
+    private double totalAmount;
+    private String status;
+    private LocalDate orderDate;
+
+    @OneToMany(mappedBy = "order" ,cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems =new ArrayList<>();
 }
