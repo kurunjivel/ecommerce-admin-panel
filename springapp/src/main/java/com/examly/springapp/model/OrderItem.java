@@ -20,6 +20,7 @@ public class OrderItem {
     public Long productId;
     public int quantity;
     public double priceAtPurchase;
+    public Product product;
 
     // Many items belong to one order
     @ManyToOne
