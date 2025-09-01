@@ -22,7 +22,6 @@ public class OrderService {
     @Autowired
     private ProductRepository productRepository;
 
-    // ✅ Create order using DTO
     public Order createOrderFromRequest(OrderCreateRequest request) {
         Order order = new Order();
         order.setCustomerName(request.getCustomerName());
@@ -41,7 +40,6 @@ public class OrderService {
                 throw new IllegalArgumentException("Insufficient stock");
             }
 
-            // decrease stock
             product.setStockQuantity(product.getStockQuantity() - itemReq.getQuantity());
             productRepository.save(product);
 
@@ -60,17 +58,14 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    // ✅ Get all orders
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
 
-    // ✅ Get order by ID
     public Order getOrderById(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
     }
-// ✅ Update order status
 public Order updateOrderStatus(Long id, String status) {
 Order order = orderRepository.findById(id)
 .orElseThrow(() -> new IllegalArgumentException("Order not found"));

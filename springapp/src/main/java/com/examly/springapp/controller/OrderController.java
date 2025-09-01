@@ -18,27 +18,23 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    // Create a new order
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody OrderCreateRequest request) {
         Order createdOrder = orderService.createOrderFromRequest(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
 
-    // Get all orders
     @GetMapping
     public List<Order> getAllOrders() {
         return orderService.getAllOrders();
     }
 
-    // Get order by id
     @GetMapping("/{id}")
     public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
         Order order = orderService.getOrderById(id);
         return ResponseEntity.ok(order);
     }
 
-    // Update status
     @PutMapping("/{id}/status")
     public ResponseEntity<Order> updateOrderStatus(@PathVariable Long id,
                                                    @RequestBody Map<String, String> request) {
