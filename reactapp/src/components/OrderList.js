@@ -1,55 +1,71 @@
+// src/components/OrderList.js
 import React, { useEffect, useState } from 'react';
-import { fetchOrders } from '../utils/api';
-
-const PAGE_SIZE = 10;
+import * as api from '../utils/api';
 
 const OrderList = ({ onViewOrder }) => {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchOrders()
-      .then(setOrders)
-      .catch(err => setError(err.message || 'Error loading orders'));
-  }, []);
+    api.fetchOrders({ page })
+      .then(data => {
+        setOrders(data.items);
+        setTotalPages(data.totalPages);
+      })
+      .catch(err => setError(err.message || 'Error fetching orders'));
+  }, [page]);
 
-  if (error) return <div>[Error - You need to specify the message]</div>;
-  if (!orders.length) return <div>Loading...</div>;
-
-  const totalPages = Math.ceil(orders.length / PAGE_SIZE);
-  const start = (page - 1) * PAGE_SIZE;
-  const visible = orders.slice(start, start + PAGE_SIZE);
+  if (error) {
+    return <div>[Error - You need to specify the message]</div>;
+  }
 
   return (
     <div>
-      <h2>Orders</h2>
-      <ul>
-        {visible.map(o => (
-          <li key={o.id}>
-            {o.customerName} - ${o.totalAmount}
-            <button
-              data-testid={`view-button-${o.id}`}
-              onClick={() => onViewOrder(o.id)}
-            >
-              View Details
-            </button>
-          </li>
-        ))}
-      </ul>
+      <h1>Orders</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+            <th>Order Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map(order => (
+            <tr key={order.id}>
+              <td>{order.customerName}</td>
+              <td>${order.totalAmount.toFixed(2)}</td>
+              <td>{order.status}</td>
+              <td>{new Date(order.orderDate).toLocaleString()}</td>
+              <td>
+                <button
+                  data-testid={`view-button-${order.id}`}
+                  onClick={() => onViewOrder(order.id)}
+                >
+                  View Details
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       <div>
         <button
           data-testid="page-prev"
-          onClick={() => setPage(p => Math.max(1, p - 1))}
-          disabled={page === 1}
+          disabled={page <= 1}
+          onClick={() => setPage(page - 1)}
         >
-          Prev
+          Previous
         </button>
         <span>Page {page} of {totalPages}</span>
         <button
           data-testid="page-next"
-          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
+          disabled={page >= totalPages}
+          onClick={() => setPage(page + 1)}
         >
           Next
         </button>
