@@ -4,6 +4,8 @@ package com.examly.springapp.controller;
 
 import com.examly.springapp.model.Product;
 import com.examly.springapp.repository.ProductRepository;
+import com.examly.springapp.service.ProductService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,8 @@ public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private ProductService proser;
 
     // Create Product
     @PostMapping
@@ -63,4 +67,11 @@ public class ProductController {
             return message;
         }
     }
+
+    @DeleteMapping("/{id}")
+    public void deleproduct(@PathVariable Long id){
+        proser.deleteProduct(id);        
+        return;
+    }
+    
 }

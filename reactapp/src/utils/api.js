@@ -1,59 +1,73 @@
 // src/utils/api.js
+import axios from 'axios';
 
-// Simulate API requests with dummy data and promises
+const API_BASE_URL = 'https://8080-cddefbcdddbcbbfdfebebacdbf.premiumproject.examly.io/api';
 
-export const fetchProducts = async ({ category, minPrice, maxPrice, page }) => {
-  // Dummy data
-  const items = [
-    { id: 1, name: 'Phone', price: 299, category: 'Electronics', stockQuantity: 10 },
-    { id: 2, name: 'Shirt', price: 25, category: 'Clothing', stockQuantity: 50 },
-  ];
-  return {
-    items,
-    totalPages: 1,
-  };
-};
+// ---------- Product APIs ----------
 
+/**
+ * Create a new product
+ * @param {Object} product
+ * @returns {Promise<Object>}
+ */
 export const createProduct = async (product) => {
-  return { id: Math.floor(Math.random() * 1000), ...product };
+  const response = await axios.post(`${API_BASE_URL}/products`, product);
+  return response.data;
 };
 
-export const fetchOrders = async ({ page }) => {
-  const items = [
-    { id: 1, customerName: 'John Doe', totalAmount: 100, status: 'PENDING', orderDate: new Date().toISOString(), orderItems: [] },
-    { id: 2, customerName: 'Jane Doe', totalAmount: 150, status: 'SHIPPED', orderDate: new Date().toISOString(), orderItems: [] },
-  ];
-  return {
-    items,
-    totalPages: 1,
-  };
+/**
+ * Fetch products with optional filters
+ * @param {Object} params
+ * @returns {Promise<Array>}
+ */
+export const fetchProducts = async (params = {}) => {
+  const response = await axios.get(`${API_BASE_URL}/products`, {
+    params: params
+  });
+  return response.data;
 };
 
+// ---------- Order APIs ----------
+
+/**
+ * Create a new order
+ * @param {Object} order
+ * @returns {Promise<Object>}
+ */
+export const createOrder = async (order) => {
+  const response = await axios.post(`${API_BASE_URL}/orders`, order);
+  return response.data;
+};
+
+/**
+ * Fetch orders with pagination or filters
+ * @param {Object} params
+ * @returns {Promise<Array>}
+ */
+export const fetchOrders = async (params = {}) => {
+  const response = await axios.get(`${API_BASE_URL}/orders`, {
+    params: params
+  });
+  return response.data;
+};
+
+/**
+ * Get order details by ID
+ * @param {number|string} orderId
+ * @returns {Promise<Object>}
+ */
 export const getOrderById = async (orderId) => {
-  return {
-    id: orderId,
-    customerName: 'John Doe',
-    customerEmail: 'john@example.com',
-    shippingAddress: '123 Main St',
-    orderDate: new Date().toISOString(),
-    status: 'PENDING',
-    totalAmount: 150,
-    orderItems: [
-      { id: 1, productId: 1, product: { name: 'Phone' }, quantity: 1, priceAtPurchase: 299 },
-      { id: 2, productId: 2, product: { name: 'Shirt' }, quantity: 2, priceAtPurchase: 25 },
-    ],
-  };
+  const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`);
+  return response.data;
 };
 
+/**
+ * Update the status of an order
+ * @param {number|string} orderId
+ * @param {string} status
+ * @returns {Promise<Object>}
+ */
 export const updateOrderStatus = async (orderId, status) => {
-  return {
-    id: orderId,
-    customerName: 'John Doe',
-    customerEmail: 'john@example.com',
-    shippingAddress: '123 Main St',
-    orderDate: new Date().toISOString(),
-    status,
-    totalAmount: 150,
-    orderItems: [],
-  };
+  const response = await axios.patch(`${API_BASE_URL}/orders/${orderId}/status`, { status });
+  return response.data;
 };

@@ -1,38 +1,39 @@
 // src/components/OrderDetails.js
-import React, { useEffect, useState } from 'react';
-import * as api from '../utils/api';
+import React, { useState, useEffect } from 'react';
+import { getOrderById, updateOrderStatus } from '../utils/api';
 
 const OrderDetails = ({ orderId, onBack }) => {
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.getOrderById(orderId)
-      .then(data => {
+    const fetchOrder = async () => {
+      try {
+        const data = await getOrderById(orderId);
         setOrder(data);
         setStatus(data.status);
-      })
-      .catch(err => setError(err.message || 'Error fetching order'));
+      } catch (err) {
+        setError(err.message || 'Order not found');
+      }
+    };
+    fetchOrder();
   }, [orderId]);
 
-  const handleSave = () => {
-    api.updateOrderStatus(orderId, status)
-      .then(updated => {
-        setOrder(updated);
-        setMessage('Status updated');
-      })
-      .catch(err => setError(err.message || 'Error updating status'));
+  const handleSave = async () => {
+    try {
+      const updated = await updateOrderStatus(orderId, status);
+      setOrder(updated);
+      setMessage('Status updated');
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Failed to update status');
+    }
   };
 
-  if (error) {
-    return <div data-testid="error-message">[Error - You need to specify the message]</div>;
-  }
-
-  if (!order) {
-    return <div data-testid="loading-message">Loading...</div>;
-  }
+  if (error) return <div>{error}</div>;
+  if (!order) return <div>Loading...</div>;
 
   return (
     <div>
@@ -41,6 +42,7 @@ const OrderDetails = ({ orderId, onBack }) => {
       <div data-testid="customer-email">{order.customerEmail}</div>
       <div data-testid="shipping-address">{order.shippingAddress}</div>
       <div data-testid="order-date">{new Date(order.orderDate).toLocaleString()}</div>
+
       <div>
         <label htmlFor="status">Order Status:</label>
         <select
@@ -56,16 +58,20 @@ const OrderDetails = ({ orderId, onBack }) => {
           <option value="CANCELLED">CANCELLED</option>
         </select>
       </div>
-      <button data-testid="save-button" onClick={handleSave}>Save</button>
-      {message && <div data-testid="success-message">{message}</div>}
-      <h2>Order Items</h2>
-      <table data-testid="order-items-table">
 
+      <button data-testid="save-button" onClick={handleSave}>Save</button>
+      <button onClick={onBack}>Back to Orders</button>
+
+      {message && <div data-testid="success-message">{message}</div>}
+
+
+<h2>Items</h2>
+<table>
 <thead>
 <tr>
 <th>Product</th>
-<th>Quantity</th>
-<th>Price at Purchase</th>
+<th>Qty</th>
+<th>Price</th>
 </tr>
 </thead>
 <tbody>
@@ -78,8 +84,8 @@ const OrderDetails = ({ orderId, onBack }) => {
 ))}
 </tbody>
 </table>
-<div data-testid="total-amount">Total Amount: ${order.totalAmount.toFixed(2)}</div>
-<button data-testid="back-button" onClick={onBack}>Back to Orders</button>
+
+<h3>Total: <span>${order.totalAmount.toFixed(2)}</span></h3>
 </div>
 );
 };

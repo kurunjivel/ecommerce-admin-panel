@@ -10,9 +10,10 @@ function App() {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
 
-  const handleViewOrder = (id) => {
-    setSelectedOrderId(id);
-    setView('orderDetails');
+  // Product handlers
+  const handleCreateProduct = () => {
+    setSelectedProductId(null);
+    setView('productForm');
   };
 
   const handleEditProduct = (id) => {
@@ -20,17 +21,19 @@ function App() {
     setView('productForm');
   };
 
-  const handleCreateProduct = () => {
-    setSelectedProductId(null);
-    setView('productForm');
-  };
-
-  const handleSaveProduct = () => {
+  const handleSaveProduct = (savedProduct) => {
+    // Could refresh list or just return to list
     setView('productList');
   };
 
-  const handleCancel = () => {
+  const handleCancelProduct = () => {
     setView('productList');
+  };
+
+  // Order handlers
+  const handleViewOrder = (id) => {
+    setSelectedOrderId(id);
+    setView('orderDetails');
   };
 
   const handleBackToOrders = () => {
@@ -39,6 +42,7 @@ function App() {
 
   return (
     <div className="App">
+      {/* Conditional Rendering */}
       {view === 'productList' && (
         <ProductList
           onEditProduct={handleEditProduct}
@@ -46,23 +50,28 @@ function App() {
           onCreateProduct={handleCreateProduct}
         />
       )}
+
       {view === 'orderList' && (
         <OrderList
           onViewOrder={handleViewOrder}
         />
       )}
-      {view === 'orderDetails' && (
+
+      {view === 'orderDetails' && selectedOrderId && (
         <OrderDetails
           orderId={selectedOrderId}
           onBack={handleBackToOrders}
         />
       )}
+
       {view === 'productForm' && (
         <ProductForm
           onSave={handleSaveProduct}
-          onCancel={handleCancel}
+          onCancel={handleCancelProduct}
         />
       )}
+
+      {/* Navigation Buttons */}
       <div style={{ marginTop: '20px' }}>
         <button onClick={() => setView('productList')}>Product List</button>
         <button onClick={() => setView('orderList')}>Order List</button>

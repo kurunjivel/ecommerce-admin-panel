@@ -41,4 +41,9 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    public Object deleproduct(Long id) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'deleproduct'");
+    }
+
 }

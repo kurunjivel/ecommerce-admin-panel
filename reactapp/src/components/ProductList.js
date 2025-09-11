@@ -1,77 +1,69 @@
 // src/components/ProductList.js
-import React, { useEffect, useState } from 'react';
-import * as api from '../utils/api';
+import React, { useState, useEffect } from 'react';
+import { fetchProducts } from '../utils/api';
+
+const PAGE_SIZE = 10;
 
 const ProductList = ({ onEditProduct, onDeleteProduct, onCreateProduct }) => {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    api.fetchProducts({ page })
-      .then(data => {
-        setProducts(data.items);
-        setTotalPages(data.totalPages);
-      })
-      .catch(err => setError(err.message || 'Error fetching products'));
-  }, [page]);
+    const loadProducts = async () => {
+      try {
+        const data = await fetchProducts();
+        setProducts(data);
+        setError('');
+      } catch (err) {
+        setError(err.message || 'Failed to fetch products');
+      }
+    };
+    loadProducts();
+  }, []);
 
-  if (error) {
-    return <div data-testid="error-message">Error: [Error - You need to specify the message]</div>;
-  }
+  if (error) return <div>{error}</div>;
+  if (!products.length) return <div>Loading...</div>;
+
+  const totalPages = Math.ceil(products.length / PAGE_SIZE);
+  const paginatedProducts = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div>
-      <h1 data-testid="products-title">Products</h1>
-      <button data-testid="create-product" onClick={onCreateProduct}>
-        Create New Product
-      </button>
-      <table data-testid="products-table">
+      <h1>Products</h1>
+      <button onClick={onCreateProduct}>Create New Product</button>
+      <table>
         <thead>
           <tr>
             <th>Name</th>
-            <th>Description</th>
-            <th>Price</th>
             <th>Category</th>
-            <th>Stock Quantity</th>
-            <th>Actions</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          {products.map(product => (
-            <tr key={product.id}>
-              <td>{product.name}</td>
-              <td>{product.description}</td>
-              <td>${product.price.toFixed(2)}</td>
-              <td>{product.category}</td>
-              <td>{product.stockQuantity}</td>
+          {paginatedProducts.map(p => (
+            <tr key={p.id}>
+              <td>{p.name}</td>
+              <td>{p.category}</td>
+              <td>${p.price}</td>
+              <td>{p.stockQuantity}</td>
               <td>
-                <button data-testid={`edit-button-${product.id}`} onClick={() => onEditProduct(product.id)}>
-                  Edit
-                </button>
-                <button data-testid={`delete-button-${product.id}`} onClick={() => onDeleteProduct(product.id)}>
-                  Delete
-                </button>
+                <button data-testid={`edit-button-${p.id}`} onClick={() => onEditProduct(p.id)}>Edit</button>
+                <button data-testid={`delete-button-${p.id}`} onClick={() => onDeleteProduct(p.id)}>Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      
       <div>
-        <button
-          data-testid="page-prev"
-          disabled={page <= 1}
-          onClick={() => setPage(page - 1)}
-        >
+        <button data-testid="page-prev" onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1}>
           Previous
         </button>
-        <span data-testid="pagination-info">Page {page} of {totalPages}</span>
-        <button
-          data-testid="page-next"
-          disabled={page >= totalPages}
-          onClick={() => setPage(page + 1)}
-        >
+        <span>Page {page} of {totalPages}</span>
+        <button data-testid="page-next" onClick={() => setPage(p => Math.min(p + 1, totalPages))} disabled={page === totalPages}>
           Next
         </button>
       </div>

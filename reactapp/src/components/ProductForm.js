@@ -1,9 +1,9 @@
 // src/components/ProductForm.js
 import React, { useState } from 'react';
-import * as api from '../utils/api';
+import { createProduct } from '../utils/api';
 
 const ProductForm = ({ onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: '',
     description: '',
     price: '',
@@ -12,105 +12,82 @@ const ProductForm = ({ onSave, onCancel }) => {
     imageUrl: '',
   });
   const [error, setError] = useState('');
-
-  const isValid = () => {
-    return formData.name && formData.description && formData.price && formData.category && formData.stockQuantity;
-  };
+  const [validationErrors, setValidationErrors] = useState({});
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
+    // Re-validate if user has attempted to submit
+    if (hasAttemptedSubmit) {
+      const newForm = { ...form, [name]: value };
+      const errors = validateForm(newForm);
+      setValidationErrors(errors);
+    }
   };
 
-  const handleSave = () => {
-    if (!isValid()) {
-      setError('Please fill all required fields');
+  const validateForm = (formData = form) => {
+    const errors = {};
+    if (!formData.name.trim()) errors.name = 'Name is required';
+    if (!formData.description.trim()) errors.description = 'Description is required';
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      if (!formData.price) errors.price = 'Price is required';
+      else errors.price = 'Price must be positive';
+    }
+    if (!formData.category.trim()) errors.category = 'Category is required';
+    if (!formData.stockQuantity || parseInt(formData.stockQuantity) < 0) {
+      if (!formData.stockQuantity) errors.stockQuantity = 'Stock Quantity is required';
+      else errors.stockQuantity = 'Stock Quantity must be positive';
+    }
+    return errors;
+  };
+
+  const handleSave = async () => {
+    setHasAttemptedSubmit(true);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
       return;
     }
-    api.createProduct({
-      name: formData.name,
-      description: formData.description,
-      price: parseFloat(formData.price),
-      category: formData.category,
-      stockQuantity: parseInt(formData.stockQuantity),
-      imageUrl: formData.imageUrl
-    }).then(product => {
-      onSave(product);
-    }).catch(err => {
-      setError(err.message || 'Error saving product');
-    });
+    
+    try {
+      const product = { ...form, price: parseFloat(form.price), stockQuantity: parseInt(form.stockQuantity) };
+      const created = await createProduct(product);
+      onSave(created);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Failed to save product');
+    }
   };
+
+  const hasValidationErrors = hasAttemptedSubmit && Object.keys(validationErrors).length > 0;
 
   return (
     <div>
-      <h1 data-testid="form-title">Product Form</h1>
-      <div>
-        <label htmlFor="name">Name</label>
-        <input
-          id="name"
-          data-testid="name-input"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label htmlFor="description">Description</label>
-        <input
-          id="description"
-          data-testid="description-input"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label htmlFor="price">Price</label>
-        <input
-          id="price"
-          data-testid="price-input"
-          name="price"
-          type="number"
-          value={formData.price}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label htmlFor="category">Category</label>
-        <input
-          id="category"
-          data-testid="category-input"
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-        />
-</div>
-<div>
-<label htmlFor="stockQuantity">Stock Quantity</label>
-<input
-id="stockQuantity"
-data-testid="stockQuantity-input"
-name="stockQuantity"
-type="number"
-value={formData.stockQuantity}
-onChange={handleChange}
-/>
-</div>
-<div>
-<label htmlFor="imageUrl">Image URL</label>
-<input
-id="imageUrl"
-data-testid="imageUrl-input"
-name="imageUrl"
-value={formData.imageUrl}
-onChange={handleChange}
-/>
-</div>
-{error && <div data-testid="error-message">[Error - You need to specify the message]</div>}
-<button data-testid="form-save" onClick={handleSave}>Save</button>
-<button data-testid="form-cancel" onClick={onCancel}>Cancel</button>
-</div>
-);
+      <h1>Product Form</h1>
+      {['name','description','price','category','stockQuantity','imageUrl'].map(field => {
+        const labelText = field === 'stockQuantity' ? 'Stock Quantity' : 
+                         field === 'imageUrl' ? 'Image URL' : 
+                         field.charAt(0).toUpperCase() + field.slice(1);
+        return (
+          <div key={field}>
+            <label htmlFor={field}>{labelText}:</label>
+            <input
+              id={field}
+              name={field}
+              value={form[field]}
+              onChange={handleChange}
+              data-testid={`${field}-input`}
+            />
+            {hasAttemptedSubmit && validationErrors[field] && <div>{validationErrors[field]}</div>}
+          </div>
+        );
+      })}
+      <button data-testid="form-save" onClick={handleSave} disabled={hasValidationErrors}>Save</button>
+      <button onClick={onCancel}>Cancel</button>
+      {error && <div>{error}</div>}
+    </div>
+  );
 };
 
 export default ProductForm;
