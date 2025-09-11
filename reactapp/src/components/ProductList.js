@@ -18,16 +18,16 @@ const ProductList = ({ onEditProduct, onDeleteProduct, onCreateProduct }) => {
   }, [page]);
 
   if (error) {
-    return <div>[Error - You need to specify the message]</div>;
+    return <div data-testid="error-message">Error: [Error - You need to specify the message]</div>;
   }
 
   return (
     <div>
-      <h1>Products</h1>
+      <h1 data-testid="products-title">Products</h1>
       <button data-testid="create-product" onClick={onCreateProduct}>
         Create New Product
       </button>
-      <table>
+      <table data-testid="products-table">
         <thead>
           <tr>
             <th>Name</th>
@@ -66,7 +66,7 @@ const ProductList = ({ onEditProduct, onDeleteProduct, onCreateProduct }) => {
         >
           Previous
         </button>
-        <span>Page {page} of {totalPages}</span>
+        <span data-testid="pagination-info">Page {page} of {totalPages}</span>
         <button
           data-testid="page-next"
           disabled={page >= totalPages}

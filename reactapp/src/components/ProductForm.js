@@ -43,10 +43,11 @@ const ProductForm = ({ onSave, onCancel }) => {
 
   return (
     <div>
-      <h1>Product Form</h1>
+      <h1 data-testid="form-title">Product Form</h1>
       <div>
-        <label>Name</label>
+        <label htmlFor="name">Name</label>
         <input
+          id="name"
           data-testid="name-input"
           name="name"
           value={formData.name}
@@ -54,8 +55,9 @@ const ProductForm = ({ onSave, onCancel }) => {
         />
       </div>
       <div>
-        <label>Description</label>
+        <label htmlFor="description">Description</label>
         <input
+          id="description"
           data-testid="description-input"
           name="description"
           value={formData.description}
@@ -63,8 +65,9 @@ const ProductForm = ({ onSave, onCancel }) => {
         />
       </div>
       <div>
-        <label>Price</label>
+        <label htmlFor="price">Price</label>
         <input
+          id="price"
           data-testid="price-input"
           name="price"
           type="number"
@@ -73,8 +76,9 @@ const ProductForm = ({ onSave, onCancel }) => {
         />
       </div>
       <div>
-        <label>Category</label>
+        <label htmlFor="category">Category</label>
         <input
+          id="category"
           data-testid="category-input"
           name="category"
           value={formData.category}
@@ -82,8 +86,9 @@ const ProductForm = ({ onSave, onCancel }) => {
         />
 </div>
 <div>
-<label>Stock Quantity</label>
+<label htmlFor="stockQuantity">Stock Quantity</label>
 <input
+id="stockQuantity"
 data-testid="stockQuantity-input"
 name="stockQuantity"
 type="number"
@@ -92,15 +97,16 @@ onChange={handleChange}
 />
 </div>
 <div>
-<label>Image URL</label>
+<label htmlFor="imageUrl">Image URL</label>
 <input
+id="imageUrl"
 data-testid="imageUrl-input"
 name="imageUrl"
 value={formData.imageUrl}
 onChange={handleChange}
 />
 </div>
-{error && <div>[Error - You need to specify the message]</div>}
+{error && <div data-testid="error-message">[Error - You need to specify the message]</div>}
 <button data-testid="form-save" onClick={handleSave}>Save</button>
 <button data-testid="form-cancel" onClick={onCancel}>Cancel</button>
 </div>
