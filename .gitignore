@@ -1,44 +1,51 @@
-# Node modules
-node_modules/
-
-# React build files
+# =========================
+# React Dependencies & Build
+# =========================
+reactapp/node_modules/
 reactapp/build/
 
-# Spring Boot target folder
+# =========================
+# Spring Boot Build Files
+# =========================
 springapp/target/
 
-# Logs
-*.log
+# =========================
+# React Test Files
+# =========================
+reactapp/src/tests/
+reactapp/src/setupTests.js
+reactapp/test-results.json
 
-# Environment files
-.env
+# =========================
+# Spring Test Files
+# =========================
+springapp/src/test/
 
-# IDE files
+# =========================
+# IDE Files
+# =========================
 .vscode/
 .idea/
 
-# OS files
+# =========================
+# OS Files
+# =========================
 .DS_Store
 Thumbs.db
 
-# Test files
-src/test/
-reactapp/src/tests/
-
-# Coverage reports
-coverage/
-
-# Package lock optional
-# package-lock.json
-
-# Maven wrapper jar (optional)
-.mvn/wrapper/maven-wrapper.jar
-
-# Temporary files
+# =========================
+# Logs & Temp Files
+# =========================
+*.log
 *.tmp
 *.temp
 
-# LMS / college metadata
-test-result.json
-tests/
-__tests__/
+# =========================
+# Environment Files
+# =========================
+.env
+
+# =========================
+# Coverage Reports
+# =========================
+coverage/
