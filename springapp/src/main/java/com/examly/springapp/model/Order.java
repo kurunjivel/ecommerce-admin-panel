@@ -32,5 +32,6 @@ public class Order {
 
     @OneToMany(mappedBy = "order" ,cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<OrderItem> orderItems =new ArrayList<>();
+    @Builder.Default
+    private List<OrderItem> orderItems = new ArrayList<>();
 }

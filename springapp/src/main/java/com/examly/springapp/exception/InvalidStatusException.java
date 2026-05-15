@@ -1,8 +1,10 @@
 package com.examly.springapp.exception;
 
-public class InvalidStatusException extends RuntimeException{
-
+public class InvalidStatusException extends RuntimeException {
     public InvalidStatusException() {
-        super("Invalid status");
+        super("Invalid order status provided");
+    }
+    public InvalidStatusException(String message) {
+        super(message);
     }
 }

@@ -1,16 +1,40 @@
 // src/App.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+import Sidebar      from './components/Sidebar';
+import Dashboard    from './components/Dashboard';
+import ProductList  from './components/ProductList';
+import ProductForm  from './components/ProductForm';
+import OrderList    from './components/OrderList';
 import OrderDetails from './components/OrderDetails';
-import OrderList from './components/OrderList';
-import ProductForm from './components/ProductForm';
-import ProductList from './components/ProductList';
+import CreateOrder  from './components/CreateOrder';
 
 function App() {
-  const [view, setView] = useState('productList'); // 'productList', 'orderList', 'productForm', 'orderDetails'
+  const [view, setView]                     = useState('dashboard');
   const [selectedProductId, setSelectedProductId] = useState(null);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [selectedOrderId, setSelectedOrderId]     = useState(null);
+  const [darkMode, setDarkMode]             = useState(() => {
+    return localStorage.getItem('darkMode') === 'true';
+  });
 
-  // Product handlers
+  // Persist dark mode preference
+  useEffect(() => {
+    localStorage.setItem('darkMode', darkMode);
+    document.body.classList.toggle('dark-mode', darkMode);
+  }, [darkMode]);
+
+  // ── Navigation ─────────────────────────────────────────────────
+
+  const navigate = (target) => {
+    setView(target);
+    setSelectedProductId(null);
+    setSelectedOrderId(null);
+  };
+
+  // ── Product handlers ───────────────────────────────────────────
+
   const handleCreateProduct = () => {
     setSelectedProductId(null);
     setView('productForm');
@@ -21,8 +45,7 @@ function App() {
     setView('productForm');
   };
 
-  const handleSaveProduct = (savedProduct) => {
-    // Could refresh list or just return to list
+  const handleSaveProduct = () => {
     setView('productList');
   };
 
@@ -30,7 +53,8 @@ function App() {
     setView('productList');
   };
 
-  // Order handlers
+  // ── Order handlers ─────────────────────────────────────────────
+
   const handleViewOrder = (id) => {
     setSelectedOrderId(id);
     setView('orderDetails');
@@ -40,42 +64,64 @@ function App() {
     setView('orderList');
   };
 
+  const handleOrderCreated = () => {
+    setView('orderList');
+  };
+
   return (
-    <div className="App">
-      {/* Conditional Rendering */}
-      {view === 'productList' && (
-        <ProductList
-          onEditProduct={handleEditProduct}
-          onDeleteProduct={(id) => console.log('Delete product', id)}
-          onCreateProduct={handleCreateProduct}
-        />
-      )}
+    <div className={`app-layout ${darkMode ? 'dark-mode' : ''}`}>
+      <Sidebar
+        currentView={view}
+        onNavigate={navigate}
+        darkMode={darkMode}
+        onToggleDark={() => setDarkMode(d => !d)}
+      />
 
-      {view === 'orderList' && (
-        <OrderList
-          onViewOrder={handleViewOrder}
-        />
-      )}
+      <main className="main-content">
+        {view === 'dashboard' && (
+          <Dashboard onNavigate={navigate} />
+        )}
 
-      {view === 'orderDetails' && selectedOrderId && (
-        <OrderDetails
-          orderId={selectedOrderId}
-          onBack={handleBackToOrders}
-        />
-      )}
+        {view === 'productList' && (
+          <ProductList
+            onEditProduct={handleEditProduct}
+            onCreateProduct={handleCreateProduct}
+          />
+        )}
 
-      {view === 'productForm' && (
-        <ProductForm
-          onSave={handleSaveProduct}
-          onCancel={handleCancelProduct}
-        />
-      )}
+        {view === 'productForm' && (
+          <ProductForm
+            productId={selectedProductId}
+            onSave={handleSaveProduct}
+            onCancel={handleCancelProduct}
+          />
+        )}
 
-      {/* Navigation Buttons */}
-      <div style={{ marginTop: '20px' }}>
-        <button onClick={() => setView('productList')}>Product List</button>
-        <button onClick={() => setView('orderList')}>Order List</button>
-      </div>
+        {view === 'orderList' && (
+          <OrderList onViewOrder={handleViewOrder} />
+        )}
+
+        {view === 'orderDetails' && selectedOrderId && (
+          <OrderDetails
+            orderId={selectedOrderId}
+            onBack={handleBackToOrders}
+          />
+        )}
+
+        {view === 'createOrder' && (
+          <CreateOrder onOrderCreated={handleOrderCreated} />
+        )}
+      </main>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        theme={darkMode ? 'dark' : 'light'}
+      />
     </div>
   );
 }

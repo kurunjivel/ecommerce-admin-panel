@@ -1,73 +1,57 @@
 // src/utils/api.js
 import axios from 'axios';
 
-const API_BASE_URL = 'https://8080-cddefbcdddbcbbfdfebebacdbf.premiumproject.examly.io/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
-// ---------- Product APIs ----------
+// ── Product APIs ──────────────────────────────────────────────────────────────
 
-/**
- * Create a new product
- * @param {Object} product
- * @returns {Promise<Object>}
- */
 export const createProduct = async (product) => {
   const response = await axios.post(`${API_BASE_URL}/products`, product);
   return response.data;
 };
 
-/**
- * Fetch products with optional filters
- * @param {Object} params
- * @returns {Promise<Array>}
- */
 export const fetchProducts = async (params = {}) => {
-  const response = await axios.get(`${API_BASE_URL}/products`, {
-    params: params
-  });
+  const response = await axios.get(`${API_BASE_URL}/products`, { params });
   return response.data;
 };
 
-// ---------- Order APIs ----------
+export const getProductById = async (id) => {
+  const response = await axios.get(`${API_BASE_URL}/products/${id}`);
+  return response.data;
+};
 
-/**
- * Create a new order
- * @param {Object} order
- * @returns {Promise<Object>}
- */
+export const updateProduct = async (id, product) => {
+  const response = await axios.put(`${API_BASE_URL}/products/${id}`, product);
+  return response.data;
+};
+
+export const deleteProduct = async (id) => {
+  await axios.delete(`${API_BASE_URL}/products/${id}`);
+};
+
+// ── Order APIs ────────────────────────────────────────────────────────────────
+
 export const createOrder = async (order) => {
   const response = await axios.post(`${API_BASE_URL}/orders`, order);
   return response.data;
 };
 
-/**
- * Fetch orders with pagination or filters
- * @param {Object} params
- * @returns {Promise<Array>}
- */
 export const fetchOrders = async (params = {}) => {
-  const response = await axios.get(`${API_BASE_URL}/orders`, {
-    params: params
-  });
+  const response = await axios.get(`${API_BASE_URL}/orders`, { params });
   return response.data;
 };
 
-/**
- * Get order details by ID
- * @param {number|string} orderId
- * @returns {Promise<Object>}
- */
 export const getOrderById = async (orderId) => {
   const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`);
   return response.data;
 };
 
-/**
- * Update the status of an order
- * @param {number|string} orderId
- * @param {string} status
- * @returns {Promise<Object>}
- */
 export const updateOrderStatus = async (orderId, status) => {
   const response = await axios.patch(`${API_BASE_URL}/orders/${orderId}/status`, { status });
+  return response.data;
+};
+
+export const cancelOrder = async (orderId) => {
+  const response = await axios.patch(`${API_BASE_URL}/orders/${orderId}/cancel`);
   return response.data;
 };

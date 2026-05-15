@@ -1,44 +1,71 @@
 // src/components/ProductForm.js
-import React, { useState } from 'react';
-import { createProduct } from '../utils/api';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { createProduct, updateProduct, getProductById } from '../utils/api';
+import Loader from './Loader';
 
-const ProductForm = ({ onSave, onCancel }) => {
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: '',
-    stockQuantity: '',
-    imageUrl: '',
-  });
-  const [error, setError] = useState('');
+const FIELDS = [
+  { key: 'name',          label: 'Name',          type: 'text'   },
+  { key: 'description',   label: 'Description',   type: 'text'   },
+  { key: 'price',         label: 'Price',         type: 'number' },
+  { key: 'category',      label: 'Category',      type: 'text'   },
+  { key: 'stockQuantity', label: 'Stock Quantity', type: 'number' },
+  { key: 'imageUrl',      label: 'Image URL',     type: 'text'   },
+];
+
+const INITIAL_FORM = { name: '', description: '', price: '', category: '', stockQuantity: '', imageUrl: '' };
+
+const ProductForm = ({ productId, onSave, onCancel }) => {
+  const isEditMode = Boolean(productId);
+
+  const [form, setForm]                       = useState(INITIAL_FORM);
+  const [loadingData, setLoadingData]         = useState(false);
+  const [error, setError]                     = useState('');
   const [validationErrors, setValidationErrors] = useState({});
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [saving, setSaving]                   = useState(false);
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (!isEditMode) return;
+    const load = async () => {
+      setLoadingData(true);
+      try {
+        const data = await getProductById(productId);
+        setForm({
+          name:          data.name          || '',
+          description:   data.description   || '',
+          price:         data.price         || '',
+          category:      data.category      || '',
+          stockQuantity: data.stockQuantity ?? '',
+          imageUrl:      data.imageUrl      || '',
+        });
+      } catch (err) {
+        setError('Failed to load product for editing.');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    load();
+  }, [productId, isEditMode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-    // Re-validate if user has attempted to submit
     if (hasAttemptedSubmit) {
-      const newForm = { ...form, [name]: value };
-      const errors = validateForm(newForm);
-      setValidationErrors(errors);
+      setValidationErrors(validateForm({ ...form, [name]: value }));
     }
   };
 
   const validateForm = (formData = form) => {
     const errors = {};
-    if (!formData.name.trim()) errors.name = 'Name is required';
-    if (!formData.description.trim()) errors.description = 'Description is required';
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      if (!formData.price) errors.price = 'Price is required';
-      else errors.price = 'Price must be positive';
-    }
-    if (!formData.category.trim()) errors.category = 'Category is required';
-    if (!formData.stockQuantity || parseInt(formData.stockQuantity) < 0) {
-      if (!formData.stockQuantity) errors.stockQuantity = 'Stock Quantity is required';
-      else errors.stockQuantity = 'Stock Quantity must be positive';
-    }
+    if (!formData.name.trim())                          errors.name = 'Name is required';
+    if (!formData.description.trim())                   errors.description = 'Description is required';
+    if (!formData.price)                                errors.price = 'Price is required';
+    else if (parseFloat(formData.price) <= 0)           errors.price = 'Price must be positive';
+    if (!formData.category.trim())                      errors.category = 'Category is required';
+    if (formData.stockQuantity === '')                  errors.stockQuantity = 'Stock Quantity is required';
+    else if (parseInt(formData.stockQuantity) < 0)     errors.stockQuantity = 'Stock Quantity must be >= 0';
     return errors;
   };
 
@@ -49,43 +76,80 @@ const ProductForm = ({ onSave, onCancel }) => {
       setValidationErrors(errors);
       return;
     }
-    
+
+    setSaving(true);
+    setError('');
     try {
-      const product = { ...form, price: parseFloat(form.price), stockQuantity: parseInt(form.stockQuantity) };
-      const created = await createProduct(product);
-      onSave(created);
-      setError('');
+      const payload = {
+        ...form,
+        price:         parseFloat(form.price),
+        stockQuantity: parseInt(form.stockQuantity),
+      };
+
+      let result;
+      if (isEditMode) {
+        result = await updateProduct(productId, payload);
+        toast.success('Product updated successfully!');
+      } else {
+        result = await createProduct(payload);
+        toast.success('Product created successfully!');
+      }
+      onSave(result);
     } catch (err) {
-      setError(err.message || 'Failed to save product');
+      const msg = err?.response?.data?.message || err.message || 'Failed to save product';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setSaving(false);
     }
   };
 
   const hasValidationErrors = hasAttemptedSubmit && Object.keys(validationErrors).length > 0;
 
+  if (loadingData) return <Loader message="Loading product data..." />;
+
   return (
-    <div>
-      <h1>Product Form</h1>
-      {['name','description','price','category','stockQuantity','imageUrl'].map(field => {
-        const labelText = field === 'stockQuantity' ? 'Stock Quantity' : 
-                         field === 'imageUrl' ? 'Image URL' : 
-                         field.charAt(0).toUpperCase() + field.slice(1);
-        return (
-          <div key={field}>
-            <label htmlFor={field}>{labelText}:</label>
+    <div className="page-content">
+      <div className="page-header">
+        <h1 className="page-title">{isEditMode ? '✏️ Edit Product' : '➕ Create Product'}</h1>
+      </div>
+
+      <div className="card form-card">
+        {FIELDS.map(({ key, label, type }) => (
+          <div className="form-group" key={key}>
+            <label className="form-label" htmlFor={key}>{label}</label>
             <input
-              id={field}
-              name={field}
-              value={form[field]}
+              id={key}
+              name={key}
+              type={type}
+              className={`form-input ${hasAttemptedSubmit && validationErrors[key] ? 'input-error' : ''}`}
+              value={form[key]}
               onChange={handleChange}
-              data-testid={`${field}-input`}
+              data-testid={`${key}-input`}
+              placeholder={label}
             />
-            {hasAttemptedSubmit && validationErrors[field] && <div>{validationErrors[field]}</div>}
+            {hasAttemptedSubmit && validationErrors[key] && (
+              <span className="field-error">{validationErrors[key]}</span>
+            )}
           </div>
-        );
-      })}
-      <button data-testid="form-save" onClick={handleSave} disabled={hasValidationErrors}>Save</button>
-      <button onClick={onCancel}>Cancel</button>
-      {error && <div>{error}</div>}
+        ))}
+
+        {error && <div className="alert alert-error">{error}</div>}
+
+        <div className="form-actions">
+          <button
+            className="btn btn-primary"
+            data-testid="form-save"
+            onClick={handleSave}
+            disabled={hasValidationErrors || saving}
+          >
+            {saving ? 'Saving...' : isEditMode ? 'Update Product' : 'Create Product'}
+          </button>
+          <button className="btn btn-secondary" onClick={onCancel} disabled={saving}>
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

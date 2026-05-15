@@ -1,77 +1,83 @@
-
-
 package com.examly.springapp.controller;
 
+import com.examly.springapp.dto.ProductDTO;
 import com.examly.springapp.model.Product;
-import com.examly.springapp.repository.ProductRepository;
 import com.examly.springapp.service.ProductService;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/products")
+@Tag(name = "Products", description = "Product management APIs")
 public class ProductController {
 
-    @Autowired
-    private ProductRepository productRepository;
-    @Autowired
-    private ProductService proser;
+    private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
-    // Create Product
+    @Autowired
+    private ProductService productService;
+
+    // ── CREATE ───────────────────────────────────────────────────────────────
+
     @PostMapping
-    public ResponseEntity<?> createProduct(@RequestBody Product product) {
-        // Basic validation
-        if (product.getName() == null || product.getName().trim().isEmpty()
-                || product.getPrice() < 0
-                || product.getCategory() == null || product.getCategory().trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(new ErrorResponse("Invalid product data"));
-        }
-
-        Product saved = productRepository.save(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @Operation(summary = "Create a new product")
+    public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody Product product) {
+        log.info("POST /api/products");
+        ProductDTO created = productService.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // Get All Products (with filtering)
+    // ── READ (list with filter + sort) ────────────────────────────────────
+
     @GetMapping
-    public ResponseEntity<List<Product>> getProducts(
+    @Operation(summary = "Get all products with optional filters and sorting")
+    public ResponseEntity<List<ProductDTO>> getProducts(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice) {
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String searchKeyword,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String direction) {
 
-        List<Product> products = productRepository.findAll();
-
-        // Apply filters manually
-        List<Product> filtered = products.stream()
-                .filter(p -> category == null || p.getCategory().equalsIgnoreCase(category))
-                .filter(p -> minPrice == null || p.getPrice() >= minPrice)
-                .filter(p -> maxPrice == null || p.getPrice() <= maxPrice)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(filtered);
+        log.info("GET /api/products");
+        List<ProductDTO> products = productService.getProducts(category, minPrice, maxPrice, searchKeyword, sortBy, direction);
+        return ResponseEntity.ok(products);
     }
 
-    // Utility class for error response
-    static class ErrorResponse {
-        private String message;
-        public ErrorResponse(String message) {
-            this.message = message;
-        }
-        public String getMessage() {
-            return message;
-        }
+    // ── READ (single) ─────────────────────────────────────────────────────
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get product by ID")
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
+        log.info("GET /api/products/{}", id);
+        return ResponseEntity.ok(productService.getById(id));
     }
+
+    // ── UPDATE ────────────────────────────────────────────────────────────
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update an existing product")
+    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id,
+                                                    @Valid @RequestBody Product product) {
+        log.info("PUT /api/products/{}", id);
+        return ResponseEntity.ok(productService.updateProduct(id, product));
+    }
+
+    // ── DELETE ────────────────────────────────────────────────────────────
 
     @DeleteMapping("/{id}")
-    public void deleproduct(@PathVariable Long id){
-        proser.deleteProduct(id);        
-        return;
+    @Operation(summary = "Delete a product by ID")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        log.info("DELETE /api/products/{}", id);
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
-    
 }
