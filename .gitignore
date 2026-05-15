@@ -1,0 +1,44 @@
+# Node modules
+node_modules/
+
+# React build files
+reactapp/build/
+
+# Spring Boot target folder
+springapp/target/
+
+# Logs
+*.log
+
+# Environment files
+.env
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+src/test/
+reactapp/src/tests/
+
+# Coverage reports
+coverage/
+
+# Package lock optional
+# package-lock.json
+
+# Maven wrapper jar (optional)
+.mvn/wrapper/maven-wrapper.jar
+
+# Temporary files
+*.tmp
+*.temp
+
+# LMS / college metadata
+test-result.json
+tests/
+__tests__/
