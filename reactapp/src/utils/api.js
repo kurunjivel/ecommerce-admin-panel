@@ -3,55 +3,96 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
+const api = axios.create({ baseURL: API_BASE_URL });
+
+// ── Attach JWT token to every request ────────────────────────────────────────
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// ── Handle 401 → redirect to login ───────────────────────────────────────────
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authUser');
+      window.location.href = '/';
+    }
+    return Promise.reject(err);
+  }
+);
+
+// ── Auth APIs ─────────────────────────────────────────────────────────────────
+
+export const loginApi = async (credentials) => {
+  const res = await api.post('/auth/login', credentials);
+  return res.data.data; // unwrap ApiResponse
+};
+
+export const registerApi = async (data) => {
+  const res = await api.post('/auth/register', data);
+  return res.data.data;
+};
+
+// ── Dashboard API ─────────────────────────────────────────────────────────────
+
+export const fetchDashboard = async () => {
+  const res = await api.get('/dashboard');
+  return res.data.data;
+};
+
 // ── Product APIs ──────────────────────────────────────────────────────────────
 
 export const createProduct = async (product) => {
-  const response = await axios.post(`${API_BASE_URL}/products`, product);
-  return response.data;
+  const res = await api.post('/products', product);
+  return res.data;
 };
 
 export const fetchProducts = async (params = {}) => {
-  const response = await axios.get(`${API_BASE_URL}/products`, { params });
-  return response.data;
+  const res = await api.get('/products', { params });
+  return res.data;
 };
 
 export const getProductById = async (id) => {
-  const response = await axios.get(`${API_BASE_URL}/products/${id}`);
-  return response.data;
+  const res = await api.get(`/products/${id}`);
+  return res.data;
 };
 
 export const updateProduct = async (id, product) => {
-  const response = await axios.put(`${API_BASE_URL}/products/${id}`, product);
-  return response.data;
+  const res = await api.put(`/products/${id}`, product);
+  return res.data;
 };
 
 export const deleteProduct = async (id) => {
-  await axios.delete(`${API_BASE_URL}/products/${id}`);
+  await api.delete(`/products/${id}`);
 };
 
 // ── Order APIs ────────────────────────────────────────────────────────────────
 
 export const createOrder = async (order) => {
-  const response = await axios.post(`${API_BASE_URL}/orders`, order);
-  return response.data;
+  const res = await api.post('/orders', order);
+  return res.data;
 };
 
 export const fetchOrders = async (params = {}) => {
-  const response = await axios.get(`${API_BASE_URL}/orders`, { params });
-  return response.data;
+  const res = await api.get('/orders', { params });
+  return res.data;
 };
 
 export const getOrderById = async (orderId) => {
-  const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`);
-  return response.data;
+  const res = await api.get(`/orders/${orderId}`);
+  return res.data;
 };
 
 export const updateOrderStatus = async (orderId, status) => {
-  const response = await axios.patch(`${API_BASE_URL}/orders/${orderId}/status`, { status });
-  return response.data;
+  const res = await api.patch(`/orders/${orderId}/status`, { status });
+  return res.data;
 };
 
 export const cancelOrder = async (orderId) => {
-  const response = await axios.patch(`${API_BASE_URL}/orders/${orderId}/cancel`);
-  return response.data;
+  const res = await api.patch(`/orders/${orderId}/cancel`);
+  return res.data;
 };

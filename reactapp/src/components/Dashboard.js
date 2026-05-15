@@ -1,34 +1,37 @@
 // src/components/Dashboard.js
 import React, { useState, useEffect } from 'react';
-import { fetchProducts, fetchOrders } from '../utils/api';
-import Loader from './Loader';
+import { fetchDashboard } from '../utils/api';
+import { SkeletonStats } from './SkeletonLoader';
 import ErrorMessage from './ErrorMessage';
 
-const StatCard = ({ icon, label, value, sub, color }) => (
-  <div className={`stat-card stat-card--${color}`}>
-    <div className="stat-icon">{icon}</div>
-    <div className="stat-body">
-      <div className="stat-value">{value}</div>
-      <div className="stat-label">{label}</div>
-      {sub && <div className="stat-sub">{sub}</div>}
-    </div>
-  </div>
-);
+const KPI_CARDS = (d) => [
+  { icon: '📦', label: 'Total Products',  value: d.totalProducts,              color: 'blue'   },
+  { icon: '🛒', label: 'Total Orders',    value: d.totalOrders,                color: 'purple' },
+  { icon: '💰', label: 'Revenue',         value: `$${d.totalRevenue.toFixed(2)}`, color: 'green' },
+  { icon: '⏳', label: 'Pending',         value: d.pendingOrders,              color: 'yellow' },
+  { icon: '🚚', label: 'Shipped',         value: d.shippedOrders,              color: 'blue'   },
+  { icon: '✅', label: 'Delivered',       value: d.deliveredOrders,            color: 'green'  },
+  { icon: '❌', label: 'Cancelled',       value: d.cancelledOrders,            color: 'red'    },
+  { icon: '⚠️', label: 'Low Stock',      value: d.lowStockCount,              color: 'orange', sub: `${d.outOfStockCount} out of stock` },
+];
+
+const STATUS_COLORS = {
+  PENDING:   '#f59e0b', SHIPPED:   '#3b82f6',
+  DELIVERED: '#10b981', CANCELLED: '#ef4444',
+};
 
 const Dashboard = ({ onNavigate }) => {
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders]     = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState('');
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [prods, ords] = await Promise.all([fetchProducts(), fetchOrders()]);
-        setProducts(prods);
-        setOrders(ords);
+        const d = await fetchDashboard();
+        setData(d);
       } catch (err) {
-        setError('Failed to load dashboard data');
+        setError(err?.response?.data?.message || 'Failed to load dashboard');
       } finally {
         setLoading(false);
       }
@@ -36,67 +39,77 @@ const Dashboard = ({ onNavigate }) => {
     load();
   }, []);
 
-  if (loading) return <Loader message="Loading dashboard..." />;
-  if (error)   return <ErrorMessage message={error} />;
+  if (loading) return <div className="page-content"><SkeletonStats /></div>;
+  if (error)   return <div className="page-content"><ErrorMessage message={error} /></div>;
 
-  // ── Computed Analytics ─────────────────────────────────────────
-  const totalProducts  = products.length;
-  const totalOrders    = orders.length;
-  const lowStock       = products.filter(p => p.stockQuantity > 0 && p.stockQuantity < 5);
-  const outOfStock     = products.filter(p => p.stockQuantity === 0);
-  const revenue        = orders
-    .filter(o => o.status !== 'CANCELLED')
-    .reduce((sum, o) => sum + o.totalAmount, 0);
-  const pendingOrders  = orders.filter(o => o.status === 'PENDING').length;
-  const shippedOrders  = orders.filter(o => o.status === 'SHIPPED').length;
-  const deliveredOrders = orders.filter(o => o.status === 'DELIVERED').length;
-  const cancelledOrders = orders.filter(o => o.status === 'CANCELLED').length;
-
-  const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
-    .slice(0, 5);
-
-  // Status distribution for simple bar chart
+  const maxRevenue = Math.max(...Object.values(data.revenueByMonth || { x: 1 }), 1);
   const statusData = [
-    { label: 'Pending',   count: pendingOrders,   color: '#f59e0b' },
-    { label: 'Shipped',   count: shippedOrders,   color: '#3b82f6' },
-    { label: 'Delivered', count: deliveredOrders, color: '#10b981' },
-    { label: 'Cancelled', count: cancelledOrders, color: '#ef4444' },
+    { label: 'Pending',   count: data.pendingOrders   },
+    { label: 'Shipped',   count: data.shippedOrders   },
+    { label: 'Delivered', count: data.deliveredOrders  },
+    { label: 'Cancelled', count: data.cancelledOrders  },
   ];
-  const maxCount = Math.max(...statusData.map(s => s.count), 1);
+  const maxStatus = Math.max(...statusData.map(s => s.count), 1);
 
   return (
     <div className="page-content">
       <div className="page-header">
         <h1 className="page-title">📊 Dashboard</h1>
-        <span className="page-subtitle">Welcome back, Admin</span>
+        <span className="page-subtitle">Live analytics overview</span>
       </div>
 
-      {/* ── KPI Cards ──────────────────────────────────────────────── */}
+      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
       <div className="stats-grid">
-        <StatCard icon="📦" label="Total Products"  value={totalProducts}       color="blue"   />
-        <StatCard icon="🛒" label="Total Orders"    value={totalOrders}         color="purple" />
-        <StatCard icon="💰" label="Total Revenue"   value={`$${revenue.toFixed(2)}`} color="green" sub="Excluding cancelled" />
-        <StatCard icon="⏳" label="Pending Orders"  value={pendingOrders}       color="yellow" />
-        <StatCard icon="🚚" label="Shipped"         value={shippedOrders}       color="blue"   />
-        <StatCard icon="✅" label="Delivered"       value={deliveredOrders}     color="green"  />
-        <StatCard icon="❌" label="Cancelled"       value={cancelledOrders}     color="red"    />
-        <StatCard icon="⚠️" label="Low Stock Items" value={lowStock.length}     color="orange" sub={`${outOfStock.length} out of stock`} />
+        {KPI_CARDS(data).map(card => (
+          <div key={card.label} className={`stat-card stat-card--${card.color}`}>
+            <div className="stat-icon">{card.icon}</div>
+            <div className="stat-body">
+              <div className="stat-value">{card.value}</div>
+              <div className="stat-label">{card.label}</div>
+              {card.sub && <div className="stat-sub">{card.sub}</div>}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="dashboard-bottom">
-        {/* ── Order Status Chart ────────────────────────────────────── */}
+        {/* ── Revenue Chart ─────────────────────────────────────────────── */}
         <div className="card chart-card">
-          <h2 className="section-title">Order Status Distribution</h2>
+          <h2 className="section-title">💰 Revenue by Month</h2>
+          {Object.keys(data.revenueByMonth || {}).length === 0 ? (
+            <p className="state-text">No revenue data yet.</p>
+          ) : (
+            <div className="bar-chart">
+              {Object.entries(data.revenueByMonth).map(([month, rev]) => (
+                <div className="bar-group" key={month}>
+                  <div className="bar-track">
+                    <div className="bar-fill bar-fill--green"
+                      style={{ height: `${(rev / maxRevenue) * 100}%` }}
+                      title={`${month}: $${rev.toFixed(0)}`}
+                    />
+                  </div>
+                  <div className="bar-count">${rev >= 1000 ? (rev/1000).toFixed(1)+'k' : rev.toFixed(0)}</div>
+                  <div className="bar-label">{month}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Order Status Chart ─────────────────────────────────────────── */}
+        <div className="card chart-card">
+          <h2 className="section-title">🛒 Order Status</h2>
           <div className="bar-chart">
             {statusData.map(s => (
               <div className="bar-group" key={s.label}>
                 <div className="bar-track">
-                  <div
-                    className="bar-fill"
-                    style={{ height: `${(s.count / maxCount) * 100}%`, background: s.color }}
+                  <div className="bar-fill"
+                    style={{
+                      height: `${(s.count / maxStatus) * 100}%`,
+                      background: STATUS_COLORS[s.label.toUpperCase()] || '#6366f1'
+                    }}
                     title={`${s.label}: ${s.count}`}
-                  ></div>
+                  />
                 </div>
                 <div className="bar-count">{s.count}</div>
                 <div className="bar-label">{s.label}</div>
@@ -104,8 +117,32 @@ const Dashboard = ({ onNavigate }) => {
             ))}
           </div>
         </div>
+      </div>
 
-        {/* ── Recent Orders ─────────────────────────────────────────── */}
+      <div className="dashboard-bottom">
+        {/* ── Top Products ───────────────────────────────────────────────── */}
+        <div className="card">
+          <h2 className="section-title">🏆 Top Products</h2>
+          {(!data.topProducts || data.topProducts.length === 0) ? (
+            <p className="state-text">No sales data yet.</p>
+          ) : (
+            <table className="data-table">
+              <thead><tr><th>#</th><th>Product</th><th>Sold</th><th>Revenue</th></tr></thead>
+              <tbody>
+                {data.topProducts.map((p, i) => (
+                  <tr key={p.productId}>
+                    <td><span className="rank-badge">#{i+1}</span></td>
+                    <td><strong>{p.productName}</strong><br/><small>{p.category}</small></td>
+                    <td><span className="badge">{p.totalSold} units</span></td>
+                    <td className="price-cell">${p.revenue.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* ── Recent Orders ──────────────────────────────────────────────── */}
         <div className="card recent-card">
           <div className="section-header">
             <h2 className="section-title">Recent Orders</h2>
@@ -113,19 +150,17 @@ const Dashboard = ({ onNavigate }) => {
               View All →
             </button>
           </div>
-          {recentOrders.length === 0 ? (
+          {(!data.recentOrders || data.recentOrders.length === 0) ? (
             <p className="state-text">No orders yet.</p>
           ) : (
             <table className="data-table">
-              <thead>
-                <tr><th>Customer</th><th>Total</th><th>Status</th></tr>
-              </thead>
+              <thead><tr><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
               <tbody>
-                {recentOrders.map(o => (
+                {data.recentOrders.map(o => (
                   <tr key={o.id}>
                     <td>{o.customerName}</td>
                     <td className="price-cell">${o.totalAmount.toFixed(2)}</td>
-                    <td><span className={`status-badge status-${o.status.toLowerCase()}`}>{o.status}</span></td>
+                    <td><span className={`status-badge status-${o.status?.toLowerCase()}`}>{o.status}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -134,26 +169,31 @@ const Dashboard = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* ── Low Stock Alerts ──────────────────────────────────────────── */}
-      {(lowStock.length > 0 || outOfStock.length > 0) && (
-        <div className="card alert-card">
-          <h2 className="section-title">🚨 Stock Alerts</h2>
-          <div className="alert-list">
-            {outOfStock.map(p => (
-              <div className="alert-item alert-item--danger" key={p.id}>
-                <span>❌ <strong>{p.name}</strong></span>
-                <span className="stock-badge stock-zero">OUT OF STOCK</span>
-              </div>
-            ))}
-            {lowStock.map(p => (
-              <div className="alert-item alert-item--warning" key={p.id}>
-                <span>⚠️ <strong>{p.name}</strong></span>
-                <span className="stock-badge stock-low">Only {p.stockQuantity} left</span>
+      {/* ── Category Breakdown ─────────────────────────────────────────────── */}
+      {data.productsByCategory && Object.keys(data.productsByCategory).length > 0 && (
+        <div className="card">
+          <h2 className="section-title">📂 Products by Category</h2>
+          <div className="category-pills">
+            {Object.entries(data.productsByCategory).map(([cat, count]) => (
+              <div className="category-pill" key={cat}>
+                <span className="cat-name">{cat}</span>
+                <span className="cat-count">{count} products</span>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Stock Alerts ───────────────────────────────────────────────────── */}
+      {(data.lowStockCount > 0 || data.outOfStockCount > 0) && (
+        <div className="card alert-card">
+          <h2 className="section-title">🚨 Stock Alerts</h2>
+          <p className="state-text">
+            {data.outOfStockCount > 0 && `${data.outOfStockCount} product(s) out of stock. `}
+            {data.lowStockCount > 0    && `${data.lowStockCount} product(s) running low (< 5 units).`}
+          </p>
           <button className="btn btn-sm btn-outline" onClick={() => onNavigate('productList')} style={{ marginTop: '1rem' }}>
-            Manage Products →
+            Manage Inventory →
           </button>
         </div>
       )}
